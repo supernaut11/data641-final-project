@@ -1,16 +1,15 @@
-import sys
 import numpy as np
 import argparse
 from sklearn.model_selection import KFold, GridSearchCV, StratifiedKFold
 from sklearn import svm, tree
 from sklearn.svm import SVC
-import json
+import os
 import csv, re
 import string
 from tqdm import tqdm
 import codecs
 import argparse
-from collections import Counter
+from collections import Counter, defaultdict
 import spacy
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -21,27 +20,6 @@ import sklearn.metrics as metrics
 import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
-
-personality = open('./wcpr_mypersonality.csv', 'r', encoding='cp1252')
-stopwords_file = "./mallet_en_stoplist.txt"
-# essays = "./wcpr_essays.csv"
-jsonfile = open('file.json', 'r+')
-
-def concat_status(statuses):
-    flags = ("cEXT", "cNEU", "cAGR", "cCON", "cOPN")
-    scores = ("sEXT", "sNEU", "sAGR", "sCON", "sOPN")
-    new_dict = {}
-    new_dict["#AUTHID"] = statuses[0]["#AUTHID"]
-    new_dict["STATUS"] = " ".join(entry["STATUS"] for entry in statuses)
-    
-    for s in scores:
-        new_dict[s] = statuses[0][s]
-    for f in flags:
-        new_dict[f] = statuses[0][f]
-    return new_dict
-
-
-# import pdb; pdb.set_trace()
 
 def normalize_tokens(tokenlist):
     # Input: list of tokens as strings,  e.g. ['I', ' ', 'saw', ' ', '@psresnik', ' ', 'on', ' ','Twitter']
@@ -158,23 +136,37 @@ def most_informative_features(vectorizer, classifier, n=20):
     for (coef_1, feature_1), (coef_2, feature_2) in top:
         print("\t%.4f\t%-15s\t\t%.4f\t%-15s" % (coef_1, feature_1, coef_2, feature_2))
 
-def main(use_sklearn_feature_extraction, num_most_informative, plot_metrics):
-    stop_words = load_stopwords(stopwords_file)
-    reader = csv.DictReader(personality)
-    authid_dict = {}
+def merge_ocean_data(ocean_entries):
+    score_fields = ("sEXT","sNEU","sAGR","sCON","sOPN")
+    flag_fields = ("cEXT","cNEU","cAGR","cCON","cOPN")
+    output = {}
+
+    output["#AUTHID"] = ocean_entries[0]["#AUTHID"]
+    output["STATUS"] = ' '.join([entry["STATUS"] for entry in ocean_entries])
+    output["CARDINALITY"] = len(ocean_entries)
+
+    for s in score_fields:
+        output[s] = ocean_entries[0][s]
+        
+    for f in flag_fields:
+        output[f] = ocean_entries[0][f]
+        
+    return output
+
+def load_ocean_data(data_handle):
+    authid_data = defaultdict(list)
+    reader = csv.DictReader(data_handle)
     for row in reader:
-        current_authid = row['#AUTHID']
-        if current_authid in authid_dict:
-            authid_dict[current_authid].append(row)
-        else:
-            authid_dict[current_authid] = [row]
+        cur_authid = row['#AUTHID']
+        authid_data[cur_authid].append(row)
+        
+    return {k: merge_ocean_data(v) for k, v in authid_data.items()}
 
-    status_mapping = {}
-    for key, value in authid_dict.items():
-        status_mapping[key] = concat_status(value)
+def main(data_dir, use_sklearn_feature_extraction, num_most_informative, plot_metrics, ngram_size):
+    # Load personality data from file such that each user is represented by a single record
+    with open(os.path.join(data_dir, 'wcpr_mypersonality.csv'), 'r', encoding='cp1252') as data_handle:
+        status_mapping = load_ocean_data(data_handle)
 
-
-    # import pdb; pdb.set_trace()
     # Read the dataset in and split it into training documents/labels (X) and test documents/labels (y)
     X_train, X_test, y_train, y_test = split_training_set(status_mapping)
     
@@ -188,9 +180,14 @@ def main(use_sklearn_feature_extraction, num_most_informative, plot_metrics):
     # print(statuses)
     # print(labels)
     # X_train, X_test, y_train, y_test = skf.split(statuses,labels)
+
+    # Load stopwords from file system
+    stopwords_file = "./mallet_en_stoplist.txt"
+    stop_words = load_stopwords(stopwords_file)
+
     if use_sklearn_feature_extraction:
         # Use sklearn CountVectorizer's built-in tokenization to get unigrams and bigrams as features
-        X_features_train, training_vectorizer = convert_text_into_features(X_train, stop_words, "word", range=(1,2))
+        X_features_train, training_vectorizer = convert_text_into_features(X_train, stop_words, "word", range=(1,ngram_size))
         X_test_documents = X_test
     else:
         # Roll your own feature extraction.
@@ -200,7 +197,6 @@ def main(use_sklearn_feature_extraction, num_most_informative, plot_metrics):
         X_train_feature_strings = convert_lines_to_feature_strings(X_train, stop_words)
         print("Creating feature strings for test data")
         X_test_documents   = convert_lines_to_feature_strings(X_test, stop_words)
-        
         
         X_features_train, training_vectorizer = convert_text_into_features(X_train_feature_strings, stop_words, whitespace_tokenizer)
         
@@ -212,7 +208,7 @@ def main(use_sklearn_feature_extraction, num_most_informative, plot_metrics):
     print("Most informative features")
     most_informative_features(training_vectorizer, lr_classifier, num_most_informative)
 
-    # Create a Random Forect classifier
+    # Create a Random Forest classifier
     forest = RandomForestClassifier() # defines Random Forest model
     forest.fit(X_features_train, y_train)
     
@@ -249,12 +245,12 @@ def main(use_sklearn_feature_extraction, num_most_informative, plot_metrics):
     criterion = ['gini', 'entropy']
     max_depth = [2,4,6,8,10,12]
     param_grid = {
-    'max_depth': [80, 90, 100, 110],
-    'max_features': ['auto', 'sqrt', 'log2'],
-    #'min_samples_leaf': [3, 4, 5],
-    #'min_samples_split': [8, 10, 12],
-    'n_estimators': [100, 200, 300],
-    'criterion' :criterion
+        'max_depth': [80, 90, 100, 110],
+        'max_features': ['auto', 'sqrt', 'log2'],
+        #'min_samples_leaf': [3, 4, 5],
+        #'min_samples_split': [8, 10, 12],
+        'n_estimators': [100, 200, 300],
+        'criterion' :criterion
     }
     parameters = dict(dec_tree__criterion=criterion, dec_tree__max_depth=max_depth)
     grid2 = GridSearchCV(pipe, parameters)
@@ -277,8 +273,11 @@ def main(use_sklearn_feature_extraction, num_most_informative, plot_metrics):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Options for running this script')
+    parser.add_argument('--data-dir', default='.', help='Location of project data resources')
+    parser.add_argument('--n-gram', default=2, type=int, help='For n-gram models, the value of n (only works with sklearn)')
     parser.add_argument('--use_sklearn_features', default=False, action='store_true', help="Use sklearn's feature extraction")
     parser.add_argument('--plot_metrics', default=False, action='store_true', help="Generate figures for evaluation")
     parser.add_argument('--num_most_informative', default=10, action='store', help="Number of most-informative features to show")
     args = parser.parse_args()
-    main(args.use_sklearn_features, int(args.num_most_informative), args.plot_metrics)
+    main(args.data_dir, args.use_sklearn_features, int(args.num_most_informative), args.plot_metrics,
+            args.n_gram)
