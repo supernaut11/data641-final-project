@@ -29,7 +29,7 @@ def normalize_tokens(tokenlist):
     #   - All handles (tokens starting with @) have been filtered out
     #   - Any underscores have been replaced with + (since we use _ as a special character in bigrams)
     normalized_tokens = [token.lower().replace('_','+') for token in tokenlist   # lowercase, _ => +
-                             if re.search('[^\s]', token) is not None            # ignore whitespace tokens
+                             if re.search(r'[^\s]', token) is not None            # ignore whitespace tokens
                              and not token.startswith("@")                       # ignore  handles
                         ]
     return normalized_tokens   
@@ -65,12 +65,14 @@ def load_stopwords(filename):
 def split_training_set(data, test_size=0.3, random_seed=42):
     statuses = []
     labels = []
-    for key, value in data.items():
+    for value in data.values():
         statuses.append(value['STATUS'])
         labels.append(value['cNEU'])
+    
     X_train, X_test, y_train, y_test = train_test_split(statuses, labels, test_size=test_size, random_state=random_seed, stratify=labels)
     print("Training set label counts: {}".format(Counter(y_train)))
     print("Test set label counts: {}".format(Counter(y_test)))
+    
     return X_train, X_test, y_train, y_test
 
 def convert_text_into_features(X, stopwords_arg, analyzefn="word", range=(1,2)):
