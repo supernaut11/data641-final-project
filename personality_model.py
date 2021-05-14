@@ -246,7 +246,7 @@ def random_forest_classify(X_train, y_train, X_test, y_test):
         print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
         print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
 
-def grid_search_classify(X_train, y_train, X_test, y_test):
+def grid_search_classify(X_train, y_train):
     # GridSearch to test parameters
     parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     svc = svm.SVC()
@@ -262,17 +262,17 @@ def grid_search_classify(X_train, y_train, X_test, y_test):
     print(grid.best_score_)
 
     dec_tree = tree.DecisionTreeClassifier()
-    rf = RandomForestClassifier()
+    rf = RandomForestClassifier(random_state=42)
     pipe = Pipeline(steps=[('dec_tree', dec_tree)])
     criterion = ['gini', 'entropy']
     max_depth = [2,4,6,8,10,12]
     param_grid = {
-        'max_depth': [80, 90, 100, 110],
+        'max_depth': [2,3,4,5,6],
         'max_features': ['auto', 'sqrt', 'log2'],
         #'min_samples_leaf': [3, 4, 5],
         #'min_samples_split': [8, 10, 12],
-        'n_estimators': [100, 200, 300],
-        'criterion' :criterion
+        'n_estimators': [200, 500],
+        'criterion' : criterion
     }
     parameters = dict(dec_tree__criterion=criterion, dec_tree__max_depth=max_depth)
     grid2 = GridSearchCV(pipe, parameters)
@@ -282,10 +282,14 @@ def grid_search_classify(X_train, y_train, X_test, y_test):
     # print the best score
     print(grid2.best_score_)
 
-    grid3 = GridSearchCV(rf, param_grid)
+    grid3 = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5)
     grid3.fit(X_train ,y_train)
     print(grid3.best_params_)
     print(grid3.best_score_)
+
+    return grid.best_estimator_, grid.best_params_, grid2.best_params_, grid3.best_params_
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Options for running this script')
@@ -302,4 +306,24 @@ if __name__ == "__main__":
     
     log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, args.num_most_informative, args.plot_metrics)
     random_forest_classify(X_train, y_train, X_test, y_test)
-    grid_search_classify(X_train, y_train, X_test, y_test)
+    # This ^ does not work with the plot_metrics flag 
+
+    # grid_search_classify(X_train, y_train)
+
+    # This next section could be cleaned up, used optimal parameters returned from GridSearch
+    # It would be ideal to take what is returned from the grid_search_classify and feed that into a separate function that
+    # uses those optimal parameters
+    rfc = RandomForestClassifier(criterion='gini', max_depth=2, max_features='auto', n_estimators=200)
+    rfc.fit(X_train,y_train)
+    pred = rfc.predict(X_test)
+    print('Accuracy for random Forest: ', metrics.accuracy_score(y_test,pred)) 
+
+    dt = tree.DecisionTreeClassifier(criterion='entropy', max_depth=2)
+    dt.fit(X_train,y_train)
+    pred2 = dt.predict(X_test)
+    print('Accuracy for Decision Tree: ', metrics.accuracy_score(y_test,pred2)) 
+
+    svm_test = svm.SVC(C=1, kernel='rbf')
+    svm_test.fit(X_train,y_train)
+    pred3 = svm_test.predict(X_test)
+    print('Accuracy for SVM: ', metrics.accuracy_score(y_test,pred3)) 
