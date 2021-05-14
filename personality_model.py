@@ -5,6 +5,7 @@ from sklearn import svm, tree
 from sklearn.svm import SVC
 import os
 import csv, re
+import datetime
 import string
 from tqdm import tqdm
 import codecs
@@ -227,11 +228,14 @@ def log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, num_most_info
 
     if plot_metrics:
         print("Generating plots")
+        now = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
         metrics.plot_confusion_matrix(lr_classifier, X_test, y_test, normalize='true')
+        plt.savefig(f'{now}-logistic_reg_conf_matrix.png')
         metrics.plot_roc_curve(lr_classifier, X_test, y_test)
+        plt.savefig(f'{now}-logistic_reg_roc.png')
         plt.show()
 
-def random_forest_classify(X_train, y_train, X_test, y_test):
+def random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=False):
     # Create a Random Forest classifier
     forest = RandomForestClassifier() # defines Random Forest model
     forest.fit(X_train, y_train)
@@ -245,6 +249,16 @@ def random_forest_classify(X_train, y_train, X_test, y_test):
     for label in ['y', 'n']:
         print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
         print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
+
+    if plot_metrics:
+        print("Generating plots")
+        now = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        metrics.plot_confusion_matrix(forest, X_test, y_test, normalize='true')
+        plt.savefig(f'{now}-random_forest_conf_matrix.png')
+        metrics.plot_roc_curve(forest, X_test, y_test)
+        plt.savefig(f'{now}-random_forest_roc.png')
+        
+        plt.show()
 
 def grid_search_classify(X_train, y_train):
     # GridSearch to test parameters
@@ -289,8 +303,6 @@ def grid_search_classify(X_train, y_train):
 
     return grid.best_estimator_, grid.best_params_, grid2.best_params_, grid3.best_params_
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Options for running this script')
     parser.add_argument('--data-dir', default='.', help='Location of project data resources')
@@ -305,8 +317,7 @@ if __name__ == "__main__":
         args.n_gram, args.filter_punc)
     
     log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, args.num_most_informative, args.plot_metrics)
-    random_forest_classify(X_train, y_train, X_test, y_test)
-    # This ^ does not work with the plot_metrics flag 
+    random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
 
     # grid_search_classify(X_train, y_train)
 

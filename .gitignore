@@ -127,3 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Project binary resources
+*.png
+project_data_and_resources.zip
+README.txt
