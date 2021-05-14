@@ -62,13 +62,13 @@ def load_stopwords(filename):
         stopwords = fp.read().split('\n')
     return set(stopwords)
 
-def split_training_set(data, test_size=0.3, random_seed=1):
+def split_training_set(data, test_size=0.3, random_seed=42):
     statuses = []
     labels = []
     for key, value in data.items():
         statuses.append(value['STATUS'])
         labels.append(value['cNEU'])
-    X_train, X_test, y_train, y_test = train_test_split(statuses, labels, test_size=0.4, random_state=1, stratify=labels)
+    X_train, X_test, y_train, y_test = train_test_split(statuses, labels, test_size=test_size, random_state=random_seed, stratify=labels)
     print("Training set label counts: {}".format(Counter(y_train)))
     print("Test set label counts: {}".format(Counter(y_test)))
     return X_train, X_test, y_train, y_test
@@ -81,7 +81,7 @@ def convert_text_into_features(X, stopwords_arg, analyzefn="word", range=(1,2)):
     X_features = training_vectorizer.fit_transform(X)
     return X_features, training_vectorizer
 
-def convert_lines_to_feature_strings(lines, stopwords, remove_stopword_bigrams=True):
+def convert_lines_to_feature_strings(lines, stopwords, remove_stopword_bigrams=True, filter_punc=False):
 
     print(" Converting from raw text to unigram and bigram features")
     if remove_stopword_bigrams:
@@ -100,15 +100,14 @@ def convert_lines_to_feature_strings(lines, stopwords, remove_stopword_bigrams=T
 
         # Collect unigram tokens as features
         # Exclude unigrams that are stopwords or are punctuation strings (e.g. '.' or ',')
-        unigrams = [token for token in normalized_tokens
-        if token not in stopwords] 
-        # and token not in string.punctuation]
+        unigrams = [token for token in normalized_tokens if token not in stopwords and (not filter_punc or token not in string.punctuation)] 
 
         # Collect string bigram tokens as features
         bigrams = []
         bigram_tokens = ["_".join(bigram) for bigram in bigrams]
-        bigrams = ngrams(normalized_tokens, 2) 
-        # bigrams = filter_punctuation_bigrams(bigrams)
+        bigrams = ngrams(normalized_tokens, 2)
+        if filter_punc:
+            bigrams = filter_punctuation_bigrams(bigrams)
         if remove_stopword_bigrams:
             bigrams = filter_stopword_bigrams(bigrams, stopwords)
         bigram_tokens = ["_".join(bigram) for bigram in bigrams]
@@ -162,24 +161,13 @@ def load_ocean_data(data_handle):
         
     return {k: merge_ocean_data(v) for k, v in authid_data.items()}
 
-def main(data_dir, use_sklearn_feature_extraction, num_most_informative, plot_metrics, ngram_size):
+def get_train_test(data_dir, use_sklearn_feature_extraction, ngram_size, filter_punc=False):
     # Load personality data from file such that each user is represented by a single record
     with open(os.path.join(data_dir, 'wcpr_mypersonality.csv'), 'r', encoding='cp1252') as data_handle:
         status_mapping = load_ocean_data(data_handle)
 
     # Read the dataset in and split it into training documents/labels (X) and test documents/labels (y)
     X_train, X_test, y_train, y_test = split_training_set(status_mapping)
-    
-    # Stratified KFold Cross-Validation, not working yet
-    # skf = StratifiedKFold(n_splits=2)
-    # statuses = []
-    # labels = []
-    # for key, value in status_mapping.items():
-    #     statuses.append(value['STATUS'])
-    #     labels.append(value['cNEU'])
-    # print(statuses)
-    # print(labels)
-    # X_train, X_test, y_train, y_test = skf.split(statuses,labels)
 
     # Load stopwords from file system
     stopwords_file = "./mallet_en_stoplist.txt"
@@ -194,42 +182,74 @@ def main(data_dir, use_sklearn_feature_extraction, num_most_informative, plot_me
         # Call convert_lines_to_feature_strings() to get your features
         # as a whitespace-separated string that will now represent the document.
         print("Creating feature strings for training data")
-        X_train_feature_strings = convert_lines_to_feature_strings(X_train, stop_words)
+        X_train_feature_strings = convert_lines_to_feature_strings(X_train, stop_words, filter_punc=filter_punc)
         print("Creating feature strings for test data")
-        X_test_documents   = convert_lines_to_feature_strings(X_test, stop_words)
+        X_test_documents   = convert_lines_to_feature_strings(X_test, stop_words, filter_punc=filter_punc)
         
         X_features_train, training_vectorizer = convert_text_into_features(X_train_feature_strings, stop_words, whitespace_tokenizer)
-        
-    # Create a logistic regression classifier trained on the featurized training data
-    lr_classifier = LogisticRegression(solver='liblinear')
-    lr_classifier.fit(X_features_train, y_train)
-
-    # Show which features have the highest-value logistic regression coefficients
-    print("Most informative features")
-    most_informative_features(training_vectorizer, lr_classifier, num_most_informative)
-
-    # Create a Random Forest classifier
-    forest = RandomForestClassifier() # defines Random Forest model
-    forest.fit(X_features_train, y_train)
     
     # Apply the "vectorizer" created using the training data to the test documents, to create testset feature vectors
     X_test_features =  training_vectorizer.transform(X_test_documents)
 
-    # Classify the test data and see how well you perform
-    # For various evaluation scores see https://scikit-learn.org/stable/modules/model_evaluation.html
-    print("Classifying test data")
-    predicted_labels = forest.predict(X_test_features)
-    # predicted_labels = lr_classifier.predict(X_test_features)
+    return training_vectorizer, X_features_train, y_train, X_test_features, y_test
+
+# TODO: Placeholder function for kfolds
+def do_kfolds():
+    # Stratified KFold Cross-Validation, not working yet
+    # skf = StratifiedKFold(n_splits=2)
+    # statuses = []
+    # labels = []
+    # for key, value in status_mapping.items():
+    #     statuses.append(value['STATUS'])
+    #     labels.append(value['cNEU'])
+    # print(statuses)
+    # print(labels)
+    # X_train, X_test, y_train, y_test = skf.split(statuses,labels)
+    pass
+
+def log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, num_most_informative=10, plot_metrics=False):
+    # Create a logistic regression classifier trained on the featurized training data
+    lr_classifier = LogisticRegression(solver='liblinear')
+    lr_classifier.fit(X_train, y_train)
+
+    # Show which features have the highest-value logistic regression coefficients
+    print("Most informative features")
+    most_informative_features(vectorizer, lr_classifier, num_most_informative)
+
+    predicted_labels = lr_classifier.predict(X_test)
+
     print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels,  y_test)))
     for label in ['y', 'n']:
         print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
         print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
+
+    if plot_metrics:
+        print("Generating plots")
+        metrics.plot_confusion_matrix(lr_classifier, X_test, y_test, normalize='true')
+        metrics.plot_roc_curve(lr_classifier, X_test, y_test)
+        plt.show()
+
+def random_forest_classify(X_train, y_train, X_test, y_test):
+    # Create a Random Forest classifier
+    forest = RandomForestClassifier() # defines Random Forest model
+    forest.fit(X_train, y_train)
     
+    # Classify the test data and see how well you perform
+    # For various evaluation scores see https://scikit-learn.org/stable/modules/model_evaluation.html
+    print("Classifying test data")
+    predicted_labels = forest.predict(X_test)
+    
+    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels,  y_test)))
+    for label in ['y', 'n']:
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
+
+def grid_search_classify(X_train, y_train, X_test, y_test):
     # GridSearch to test parameters
     parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     svc = svm.SVC()
     grid = GridSearchCV(svc, parameters)
-    grid.fit(X_features_train, y_train)
+    grid.fit(X_train, y_train)
     # print the selected model
     print(grid.best_estimator_)
 
@@ -254,30 +274,30 @@ def main(data_dir, use_sklearn_feature_extraction, num_most_informative, plot_me
     }
     parameters = dict(dec_tree__criterion=criterion, dec_tree__max_depth=max_depth)
     grid2 = GridSearchCV(pipe, parameters)
-    grid2.fit(X_features_train, y_train)
+    grid2.fit(X_train, y_train)
     # print best parameter after tuning
     print(grid2.best_params_)
     # print the best score
     print(grid2.best_score_)
 
     grid3 = GridSearchCV(rf, param_grid)
-    grid3.fit(X_features_train,y_train)
+    grid3.fit(X_train ,y_train)
     print(grid3.best_params_)
     print(grid3.best_score_)
-
-    if plot_metrics:
-        print("Generating plots")
-        metrics.plot_confusion_matrix(lr_classifier, X_test_features, y_test, normalize='true')
-        metrics.plot_roc_curve(lr_classifier, X_test_features, y_test)
-        plt.show()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Options for running this script')
     parser.add_argument('--data-dir', default='.', help='Location of project data resources')
     parser.add_argument('--n-gram', default=2, type=int, help='For n-gram models, the value of n (only works with sklearn)')
+    parser.add_argument('--filter-punc', default=False, action='store_true', help='Filter punctuation')
     parser.add_argument('--use_sklearn_features', default=False, action='store_true', help="Use sklearn's feature extraction")
     parser.add_argument('--plot_metrics', default=False, action='store_true', help="Generate figures for evaluation")
-    parser.add_argument('--num_most_informative', default=10, action='store', help="Number of most-informative features to show")
+    parser.add_argument('--num_most_informative', default=10, action='store', type=int, help="Number of most-informative features to show")
     args = parser.parse_args()
-    main(args.data_dir, args.use_sklearn_features, int(args.num_most_informative), args.plot_metrics,
-            args.n_gram)
+    
+    vectorizer, X_train, y_train, X_test, y_test = get_train_test(args.data_dir, args.use_sklearn_features, 
+        args.n_gram, args.filter_punc)
+    
+    log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, args.num_most_informative, args.plot_metrics)
+    random_forest_classify(X_train, y_train, X_test, y_test)
+    grid_search_classify(X_train, y_train, X_test, y_test)
