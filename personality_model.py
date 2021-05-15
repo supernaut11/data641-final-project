@@ -272,20 +272,20 @@ def random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=False)
         
         plt.show()
 
-def grid_search_classify(X_train, y_train):
+def grid_search_classify(X_train, y_train, X_test, y_test):
     # GridSearch to test parameters
     parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     svc = svm.SVC()
     grid = GridSearchCV(svc, parameters)
     grid.fit(X_train, y_train)
-    # print the selected model
-    print(grid.best_estimator_)
+    predicted_labels = grid.best_estimator_.predict(X_test)
+    print(f'best SVM hyperparameters: {grid.best_params_}')
+    print(f'best average precision: {grid.best_score_}')
 
-    # print best parameter after tuning
-    print(grid.best_params_)
-
-    # print the best score
-    print(grid.best_score_)
+    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels,  y_test)))
+    for label in [1, 0]:
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
 
     dec_tree = tree.DecisionTreeClassifier()
     rf = RandomForestClassifier(random_state=42)
@@ -303,17 +303,27 @@ def grid_search_classify(X_train, y_train):
     parameters = dict(dec_tree__criterion=criterion, dec_tree__max_depth=max_depth)
     grid2 = GridSearchCV(pipe, parameters)
     grid2.fit(X_train, y_train)
-    # print best parameter after tuning
-    print(grid2.best_params_)
-    # print the best score
-    print(grid2.best_score_)
+    predicted_labels2 = grid2.best_estimator_.predict(X_test)
+    print(f'best SVM hyperparameters: {grid2.best_params_}')
+    print(f'best average precision: {grid2.best_score_}')
+
+    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels2,  y_test)))
+    for label in [1, 0]:
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels2, y_test, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels2, y_test, pos_label=label)))
+
 
     grid3 = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5)
     grid3.fit(X_train ,y_train)
-    print(grid3.best_params_)
-    print(grid3.best_score_)
+    predicted_labels3 = grid3.best_estimator_.predict(X_test)
+    print(f'best SVM hyperparameters: {grid3.best_params_}')
+    print(f'best average precision: {grid3.best_score_}')
 
-    return grid.best_estimator_, grid.best_params_, grid2.best_params_, grid3.best_params_
+    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels3,  y_test)))
+    for label in [1, 0]:
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels3, y_test, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels3, y_test, pos_label=label)))
+
 
 def perform_llr_analysis(X_data, y_labels, label1, label2, n=25):
     top_label1, top_label2 = calculate_llr(X_data, y_labels, label1, label2, n)
