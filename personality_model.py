@@ -274,6 +274,10 @@ def random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=False)
 
 def grid_search_classify(X_train, y_train, X_test, y_test):
     # GridSearch to test parameters
+    label_normalizer = lambda x: 1 if x == 'y' else 0
+    y_train = [y for y in map(label_normalizer, y_train)]
+    y_test = [y for y in map(label_normalizer, y_test)]
+
     parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     svc = svm.SVC()
     grid = GridSearchCV(svc, parameters)
@@ -295,8 +299,6 @@ def grid_search_classify(X_train, y_train, X_test, y_test):
     param_grid = {
         'max_depth': [2,3,4,5,6],
         'max_features': ['auto', 'sqrt', 'log2'],
-        #'min_samples_leaf': [3, 4, 5],
-        #'min_samples_split': [8, 10, 12],
         'n_estimators': [200, 500],
         'criterion' : criterion
     }
