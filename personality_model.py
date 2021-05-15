@@ -272,20 +272,24 @@ def random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=False)
         
         plt.show()
 
-def grid_search_classify(X_train, y_train):
+def grid_search_classify(X_train, y_train, X_test, y_test):
     # GridSearch to test parameters
+    label_normalizer = lambda x: 1 if x == 'y' else 0
+    y_train = [y for y in map(label_normalizer, y_train)]
+    y_test = [y for y in map(label_normalizer, y_test)]
+
     parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     svc = svm.SVC()
     grid = GridSearchCV(svc, parameters)
     grid.fit(X_train, y_train)
-    # print the selected model
-    print(grid.best_estimator_)
+    predicted_labels = grid.best_estimator_.predict(X_test)
+    print(f'best SVM hyperparameters: {grid.best_params_}')
+    print(f'best average precision: {grid.best_score_}')
 
-    # print best parameter after tuning
-    print(grid.best_params_)
-
-    # print the best score
-    print(grid.best_score_)
+    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels,  y_test)))
+    for label in [1, 0]:
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
 
     dec_tree = tree.DecisionTreeClassifier()
     rf = RandomForestClassifier(random_state=42)
@@ -295,25 +299,33 @@ def grid_search_classify(X_train, y_train):
     param_grid = {
         'max_depth': [2,3,4,5,6],
         'max_features': ['auto', 'sqrt', 'log2'],
-        #'min_samples_leaf': [3, 4, 5],
-        #'min_samples_split': [8, 10, 12],
         'n_estimators': [200, 500],
         'criterion' : criterion
     }
     parameters = dict(dec_tree__criterion=criterion, dec_tree__max_depth=max_depth)
     grid2 = GridSearchCV(pipe, parameters)
     grid2.fit(X_train, y_train)
-    # print best parameter after tuning
-    print(grid2.best_params_)
-    # print the best score
-    print(grid2.best_score_)
+    predicted_labels2 = grid2.best_estimator_.predict(X_test)
+    print(f'best SVM hyperparameters: {grid2.best_params_}')
+    print(f'best average precision: {grid2.best_score_}')
+
+    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels2,  y_test)))
+    for label in [1, 0]:
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels2, y_test, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels2, y_test, pos_label=label)))
+
 
     grid3 = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5)
     grid3.fit(X_train ,y_train)
-    print(grid3.best_params_)
-    print(grid3.best_score_)
+    predicted_labels3 = grid3.best_estimator_.predict(X_test)
+    print(f'best SVM hyperparameters: {grid3.best_params_}')
+    print(f'best average precision: {grid3.best_score_}')
 
-    return grid.best_estimator_, grid.best_params_, grid2.best_params_, grid3.best_params_
+    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels3,  y_test)))
+    for label in [1, 0]:
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels3, y_test, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels3, y_test, pos_label=label)))
+
 
 def perform_llr_analysis(X_data, y_labels, label1, label2, n=25):
     top_label1, top_label2 = calculate_llr(X_data, y_labels, label1, label2, n)
@@ -345,22 +357,6 @@ if __name__ == "__main__":
     knn_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics, k=10)
     knn_experiment(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
 
-    # grid_search_classify(X_train, y_train)
+    grid_search_classify(X_train, y_train, X_test, y_test)
 
-    # This next section could be cleaned up, used optimal parameters returned from GridSearch
-    # It would be ideal to take what is returned from the grid_search_classify and feed that into a separate function that
-    # uses those optimal parameters
-    rfc = RandomForestClassifier(criterion='gini', max_depth=2, max_features='auto', n_estimators=200)
-    rfc.fit(X_train,y_train)
-    pred = rfc.predict(X_test)
-    print('Accuracy for random Forest: ', metrics.accuracy_score(y_test,pred)) 
-
-    dt = tree.DecisionTreeClassifier(criterion='entropy', max_depth=2)
-    dt.fit(X_train,y_train)
-    pred2 = dt.predict(X_test)
-    print('Accuracy for Decision Tree: ', metrics.accuracy_score(y_test,pred2)) 
-
-    svm_test = svm.SVC(C=1, kernel='rbf')
-    svm_test.fit(X_train,y_train)
-    pred3 = svm_test.predict(X_test)
-    print('Accuracy for SVM: ', metrics.accuracy_score(y_test,pred3)) 
+    
