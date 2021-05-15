@@ -66,6 +66,7 @@ y_test = essay_data['cNEU']
 lr_rf_classify()
 
 # Testing K Folds
+# Adapted from https://www.analyseup.com/python-machine-learning/stratified-kfold.html
 
 skf = StratifiedKFold(n_splits=5)
 target = df.loc[:,'cNEU']
