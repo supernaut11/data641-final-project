@@ -23,6 +23,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
 from knn_classify import knn_classify, knn_experiment
+from llr_analysis import calculate_llr
 
 def normalize_tokens(tokenlist):
     # Input: list of tokens as strings,  e.g. ['I', ' ', 'saw', ' ', '@psresnik', ' ', 'on', ' ','Twitter']
@@ -44,6 +45,9 @@ def ngrams(tokens, n):
 # Split on whitespace, e.g. "a    b_c  d" returns tokens ['a','b_c','d']
 def whitespace_tokenizer(line):
     return line.split()
+
+def filter_url_bigrams(ngrams):
+    return [ngram   for ngram in ngrams   if not ngram[0].lower().startswith('http') and not ngram[1].lower().startswith('http')]
 
 def filter_punctuation_bigrams(ngrams):
     # Input: assume ngrams is a list of ['token1','token2'] bigrams
@@ -86,7 +90,7 @@ def convert_text_into_features(X, stopwords_arg, analyzefn="word", range=(1,2)):
     X_features = training_vectorizer.fit_transform(X)
     return X_features, training_vectorizer
 
-def convert_lines_to_feature_strings(lines, stopwords, remove_stopword_bigrams=True, filter_punc=False):
+def convert_lines_to_feature_strings(lines, stopwords, remove_stopword_bigrams=True, filter_punc=False, filter_urls=False):
 
     print(" Converting from raw text to unigram and bigram features")
     if remove_stopword_bigrams:
@@ -106,6 +110,7 @@ def convert_lines_to_feature_strings(lines, stopwords, remove_stopword_bigrams=T
         # Collect unigram tokens as features
         # Exclude unigrams that are stopwords or are punctuation strings (e.g. '.' or ',')
         unigrams = [token for token in normalized_tokens if token not in stopwords and (not filter_punc or token not in string.punctuation)] 
+        unigrams = [token for token in unigrams if not filter_punc or not token.lower().startswith('http')]
 
         # Collect string bigram tokens as features
         bigrams = []
@@ -113,6 +118,8 @@ def convert_lines_to_feature_strings(lines, stopwords, remove_stopword_bigrams=T
         bigrams = ngrams(normalized_tokens, 2)
         if filter_punc:
             bigrams = filter_punctuation_bigrams(bigrams)
+        if filter_urls:
+            bigrams = filter_url_bigrams(bigrams)
         if remove_stopword_bigrams:
             bigrams = filter_stopword_bigrams(bigrams, stopwords)
         bigram_tokens = ["_".join(bigram) for bigram in bigrams]
@@ -166,7 +173,7 @@ def load_ocean_data(data_handle):
         
     return {k: merge_ocean_data(v) for k, v in authid_data.items()}
 
-def get_train_test(data_dir, use_sklearn_feature_extraction, ngram_size, filter_punc=False):
+def get_train_test(data_dir, use_sklearn_feature_extraction, ngram_size, filter_punc=False, filter_urls=False, llr=0):
     # Load personality data from file such that each user is represented by a single record
     with open(os.path.join(data_dir, 'wcpr_mypersonality.csv'), 'r', encoding='cp1252') as data_handle:
         status_mapping = load_ocean_data(data_handle)
@@ -187,10 +194,13 @@ def get_train_test(data_dir, use_sklearn_feature_extraction, ngram_size, filter_
         # Call convert_lines_to_feature_strings() to get your features
         # as a whitespace-separated string that will now represent the document.
         print("Creating feature strings for training data")
-        X_train_feature_strings = convert_lines_to_feature_strings(X_train, stop_words, filter_punc=filter_punc)
+        X_train_feature_strings = convert_lines_to_feature_strings(X_train, stop_words, filter_punc=filter_punc, filter_urls=filter_urls)
         print("Creating feature strings for test data")
-        X_test_documents   = convert_lines_to_feature_strings(X_test, stop_words, filter_punc=filter_punc)
+        X_test_documents   = convert_lines_to_feature_strings(X_test, stop_words, filter_punc=filter_punc, filter_urls=filter_urls)
         
+        if llr > 0:
+            perform_llr_analysis(X_train_feature_strings, y_train, 'y', 'n', llr)
+
         X_features_train, training_vectorizer = convert_text_into_features(X_train_feature_strings, stop_words, whitespace_tokenizer)
     
     # Apply the "vectorizer" created using the training data to the test documents, to create testset feature vectors
@@ -305,19 +315,31 @@ def grid_search_classify(X_train, y_train):
 
     return grid.best_estimator_, grid.best_params_, grid2.best_params_, grid3.best_params_
 
+def perform_llr_analysis(X_data, y_labels, label1, label2, n=25):
+    top_label1, top_label2 = calculate_llr(X_data, y_labels, label1, label2, n)
+
+    print(f'top {n} llr for label {label1}:')
+    for k, v in top_label1.items():
+        print(f'\t{k}\t{v}')
+    print(f'top {n} llr for label {label2}:')
+    for k, v in top_label2.items():
+        print(f'\t{k}\t{v}')
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Options for running this script')
     parser.add_argument('--data-dir', default='.', help='Location of project data resources')
     parser.add_argument('--n-gram', default=2, type=int, help='For n-gram models, the value of n (only works with sklearn)')
+    parser.add_argument('--llr', default=0, type=int, help='Perform LLR analysis and provide top n results per label')
     parser.add_argument('--filter-punc', default=False, action='store_true', help='Filter punctuation')
+    parser.add_argument('--filter-urls', default=False, action='store_true', help='Filter URLs from input')
     parser.add_argument('--use_sklearn_features', default=False, action='store_true', help="Use sklearn's feature extraction")
     parser.add_argument('--plot_metrics', default=False, action='store_true', help="Generate figures for evaluation")
     parser.add_argument('--num_most_informative', default=10, action='store', type=int, help="Number of most-informative features to show")
     args = parser.parse_args()
     
     vectorizer, X_train, y_train, X_test, y_test = get_train_test(args.data_dir, args.use_sklearn_features, 
-        args.n_gram, args.filter_punc)
-    
+        args.n_gram, args.filter_punc, args.filter_urls, args.llr)
+
     log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, args.num_most_informative, args.plot_metrics)
     random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
     knn_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics, k=10)
