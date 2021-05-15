@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
-from knn_classify import knn_classify
+from knn_classify import knn_classify, knn_experiment
 
 def normalize_tokens(tokenlist):
     # Input: list of tokens as strings,  e.g. ['I', ' ', 'saw', ' ', '@psresnik', ' ', 'on', ' ','Twitter']
@@ -321,6 +321,7 @@ if __name__ == "__main__":
     log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, args.num_most_informative, args.plot_metrics)
     random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
     knn_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics, k=10)
+    knn_experiment(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
 
     # grid_search_classify(X_train, y_train)
 
