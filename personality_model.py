@@ -355,22 +355,6 @@ if __name__ == "__main__":
     knn_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics, k=10)
     knn_experiment(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
 
-    # grid_search_classify(X_train, y_train)
+    grid_search_classify(X_train, y_train, X_test, y_test)
 
-    # This next section could be cleaned up, used optimal parameters returned from GridSearch
-    # It would be ideal to take what is returned from the grid_search_classify and feed that into a separate function that
-    # uses those optimal parameters
-    rfc = RandomForestClassifier(criterion='gini', max_depth=2, max_features='auto', n_estimators=200)
-    rfc.fit(X_train,y_train)
-    pred = rfc.predict(X_test)
-    print('Accuracy for random Forest: ', metrics.accuracy_score(y_test,pred)) 
-
-    dt = tree.DecisionTreeClassifier(criterion='entropy', max_depth=2)
-    dt.fit(X_train,y_train)
-    pred2 = dt.predict(X_test)
-    print('Accuracy for Decision Tree: ', metrics.accuracy_score(y_test,pred2)) 
-
-    svm_test = svm.SVC(C=1, kernel='rbf')
-    svm_test.fit(X_train,y_train)
-    pred3 = svm_test.predict(X_test)
-    print('Accuracy for SVM: ', metrics.accuracy_score(y_test,pred3)) 
+    
