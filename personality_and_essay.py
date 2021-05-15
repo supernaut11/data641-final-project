@@ -3,12 +3,29 @@ import numpy as np
 import scipy as sp
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.model_selection import KFold, GridSearchCV, StratifiedKFold
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn import metrics
 from textblob import TextBlob, Word
 import nltk
 import re
+import argparse
+from sklearn import svm, tree
+from sklearn.svm import SVC
+import os
+import csv, re
+import datetime
+import string
+from tqdm import tqdm
+import codecs
+from collections import Counter, defaultdict
+import spacy
+from spacy.lang.en import English
+import matplotlib.pyplot as plt
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import accuracy_score
+import statistics
 
 
 data = pd.read_csv('wcpr_mypersonality.csv', encoding='cp1252')
@@ -27,11 +44,16 @@ essay_data = pd.read_csv('wcpr_essays.csv', encoding='cp1252')
 
 #essay_data.head()
 
+def split_into_lemmas(text): # creates function to lemmatize words
+    text = str(text).lower() # converts all words to lowercase
+    words = TextBlob(text).words # returns all words
+    return [word.lemmatize() for word in words] # lemmatizes every word
+
 
 def lr_rf_classify():
     forest = RandomForestClassifier()
     lr_classifier = LogisticRegression()
-    vect = CountVectorizer(stop_words='english', ngram_range=(1,2), max_features=100000)
+    vect = CountVectorizer(analyzer=split_into_lemmas, decode_error='replace', min_df=2, stop_words='english', ngram_range=(1,2), max_features=100000)
     
     X_train_dtm = vect.fit_transform(X_train)
     X_test_dtm = vect.transform(X_test)
@@ -71,11 +93,13 @@ lr_rf_classify()
 skf = StratifiedKFold(n_splits=5)
 target = df.loc[:,'cNEU']
 
-model = RandomForestClassifier()
-
-fold_acc = list()
+rf_acc = list()
+lr_acc = list()
 
 def train_model(train, test, fold_no):
+    forest = RandomForestClassifier()
+    lr_classifier = LogisticRegression()
+    
     X_train, X_test, y_train, y_test = train_test_split(df['STATUS'], df['cNEU'])
     #X_test = essay_data['TEXT']
     #y_test = essay_data['cNEU']
@@ -85,10 +109,15 @@ def train_model(train, test, fold_no):
     X_train_dtm = vect.fit_transform(X_train)
     X_test_dtm = vect.transform(X_test)
     
-    model.fit(X_train_dtm,y_train)
-    predictions = model.predict(X_test_dtm)
-    print('Fold',str(fold_no),'Accuracy:',accuracy_score(y_test,predictions))
-    fold_acc.append(accuracy_score(y_test, predictions))
+    forest.fit(X_train_dtm,y_train)
+    predictions = forest.predict(X_test_dtm)
+    print('Random Forest Fold',str(fold_no),'Accuracy:',accuracy_score(y_test,predictions))
+    rf_acc.append(accuracy_score(y_test, predictions))
+    
+    lr_classifier.fit(X_train_dtm,y_train)
+    predictions = lr_classifier.predict(X_test_dtm)
+    print('Logistic Regression Fold',str(fold_no),'Accuracy:',accuracy_score(y_test,predictions))
+    lr_acc.append(accuracy_score(y_test, predictions))
     
 fold_no = 1
 for train_index, test_index in skf.split(df, target):
@@ -98,4 +127,5 @@ for train_index, test_index in skf.split(df, target):
     fold_no += 1
 
 print('\n')
-print('Average Accuracy: ',statistics.mean(fold_acc))
+print('Random Forest Average Accuracy: ',statistics.mean(rf_acc))
+print('Logistic Regression Average Accuracy: ',statistics.mean(lr_acc))
