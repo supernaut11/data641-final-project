@@ -325,17 +325,34 @@ if __name__ == "__main__":
     parser.add_argument('--llr', default=0, type=int, help='Perform LLR analysis and provide top n results per label')
     parser.add_argument('--filter-punc', default=False, action='store_true', help='Filter punctuation')
     parser.add_argument('--filter-urls', default=False, action='store_true', help='Filter URLs from input')
+    parser.add_argument('--baseline', default=False, action='store_true', help='Execute only the baseline classifier')
+    parser.add_argument('--random-forest', default=False, action='store_true', help='Execute only the random forest classifier')
+    parser.add_argument('--grid-search', default=False, action='store_true', help='Execute only the grid search classifiers')
+    parser.add_argument('--optimized-knn', default=False, action='store_true', help='Execute only the optimized KNN classifier')
     parser.add_argument('--use_sklearn_features', default=False, action='store_true', help="Use sklearn's feature extraction")
     parser.add_argument('--plot_metrics', default=False, action='store_true', help="Generate figures for evaluation")
     parser.add_argument('--num_most_informative', default=10, action='store', type=int, help="Number of most-informative features to show")
     args = parser.parse_args()
-    
-    vectorizer, X_train, y_train, X_test, y_test = get_train_test(args.data_dir, args.use_sklearn_features, 
-        args.n_gram, args.filter_punc, args.filter_urls, args.llr)
 
-    log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, args.num_most_informative, args.plot_metrics)
-    random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
-    knn_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics, k=10)
-    knn_experiment(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
+    if args.baseline:
+        vectorizer, X_train, y_train, X_test, y_test = get_train_test(args.data_dir, False, 2, True, False)
+        log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, args.num_most_informative, args.plot_metrics)
+    elif args.random_forest:
+        vectorizer, X_train, y_train, X_test, y_test = get_train_test(args.data_dir, False, 2, False, False, False)
+        random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
+    elif args.grid_search:
+        vectorizer, X_train, y_train, X_test, y_test = get_train_test(args.data_dir, False, 2, False, False, False)
+        grid_search_classify(X_train, y_train, X_test, y_test)
+    elif args.optimized_knn:
+        vectorizer, X_train, y_train, X_test, y_test = get_train_test(args.data_dir, False, 2, False, False, False)
+        knn_experiment(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
+    else:
+        vectorizer, X_train, y_train, X_test, y_test = get_train_test(args.data_dir, args.use_sklearn_features, 
+            args.n_gram, args.filter_punc, args.filter_urls, args.llr)
 
-    grid_search_classify(X_train, y_train, X_test, y_test)
+        log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, args.num_most_informative, args.plot_metrics)
+        random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
+        knn_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics, k=10)
+        knn_experiment(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
+
+        grid_search_classify(X_train, y_train, X_test, y_test)
