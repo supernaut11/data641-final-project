@@ -208,20 +208,6 @@ def get_train_test(data_dir, use_sklearn_feature_extraction, ngram_size, filter_
 
     return training_vectorizer, X_features_train, y_train, X_test_features, y_test
 
-# TODO: Placeholder function for kfolds
-def do_kfolds():
-    # Stratified KFold Cross-Validation, not working yet
-    # skf = StratifiedKFold(n_splits=2)
-    # statuses = []
-    # labels = []
-    # for key, value in status_mapping.items():
-    #     statuses.append(value['STATUS'])
-    #     labels.append(value['cNEU'])
-    # print(statuses)
-    # print(labels)
-    # X_train, X_test, y_train, y_test = skf.split(statuses,labels)
-    pass
-
 def log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, num_most_informative=10, plot_metrics=False):
     # Create a logistic regression classifier trained on the featurized training data
     lr_classifier = LogisticRegression(solver='liblinear')
@@ -357,5 +343,3 @@ if __name__ == "__main__":
     knn_experiment(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
 
     grid_search_classify(X_train, y_train, X_test, y_test)
-
-    
