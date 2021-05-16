@@ -53,10 +53,10 @@ def knn_experiment(X_train, y_train, X_test, y_test, plot_metrics=False):
     print(f'best knn hyperparameters: {gsearch.best_params_}')
     print(f'best {scoring} score: {gsearch.best_score_}')
 
-    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels,  y_test)))
+    print('Accuracy  = {}'.format(metrics.accuracy_score(y_test, predicted_labels)))
     for label in [1, 0]:
-        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
-        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(y_test, predicted_labels, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(y_test, predicted_labels, pos_label=label)))
     
     if plot_metrics:
         print("Generating plots")

@@ -215,15 +215,15 @@ def log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, num_most_info
 
     predicted_labels = lr_classifier.predict(X_test)
 
-    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels,  y_test)))
+    print('Accuracy  = {}'.format(metrics.accuracy_score(y_test, predicted_labels)))
     for label in ['y', 'n']:
-        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
-        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(y_test, predicted_labels, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(y_test, predicted_labels, pos_label=label)))
 
     if plot_metrics:
         print("Generating plots")
         now = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-        metrics.plot_confusion_matrix(lr_classifier, X_test, y_test, normalize='true', cmap='Blues')
+        metrics.plot_confusion_matrix(lr_classifier, X_test, y_test, cmap='Blues')
         plt.savefig(f'{now}-logistic_reg_conf_matrix.png')
         metrics.plot_roc_curve(lr_classifier, X_test, y_test)
         plt.savefig(f'{now}-logistic_reg_roc.png')
@@ -239,10 +239,10 @@ def random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=False)
     print("Classifying test data")
     predicted_labels = forest.predict(X_test)
     
-    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels,  y_test)))
+    print('Accuracy  = {}'.format(metrics.accuracy_score(y_test, predicted_labels)))
     for label in ['y', 'n']:
-        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
-        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(y_test, predicted_labels, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(y_test, predicted_labels, pos_label=label)))
 
     if plot_metrics:
         print("Generating plots")
@@ -269,10 +269,10 @@ def grid_search_classify(X_train, y_train, X_test, y_test, plot_metrics=False):
     print(f'Best SVM hyperparameters: {grid.best_params_}')
     print(f'Best {scoring} score: {grid.best_score_}')
 
-    print('Prediction accuracy = {}'.format(metrics.accuracy_score(predicted_labels,  y_test)))
+    print('Prediction accuracy = {}'.format(metrics.accuracy_score(y_test, predicted_labels)))
     for label in [1, 0]:
-        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
-        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(y_test, predicted_labels, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(y_test, predicted_labels, pos_label=label)))
 
     if plot_metrics:
         print("Generating plots")
@@ -296,10 +296,10 @@ def grid_search_classify(X_train, y_train, X_test, y_test, plot_metrics=False):
     print(f'Best Decision tree hyperparameters: {grid2.best_params_}')
     print(f'Best {scoring} score: {grid2.best_score_}')
 
-    print('Prediction accuracy = {}'.format(metrics.accuracy_score(predicted_labels2,  y_test)))
+    print('Prediction accuracy = {}'.format(metrics.accuracy_score(y_test, predicted_labels2)))
     for label in [1, 0]:
-        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels2, y_test, pos_label=label)))
-        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels2, y_test, pos_label=label)))
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(y_test, predicted_labels2, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(y_test, predicted_labels2, pos_label=label)))
 
     if plot_metrics:
         print("Generating plots")
@@ -322,10 +322,10 @@ def grid_search_classify(X_train, y_train, X_test, y_test, plot_metrics=False):
     print(f'Best Random Forest hyperparameters: {grid3.best_params_}')
     print(f'Best {scoring} score: {grid3.best_score_}')
 
-    print('Prediction accuracy = {}'.format(metrics.accuracy_score(predicted_labels3,  y_test)))
+    print('Prediction accuracy = {}'.format(metrics.accuracy_score(y_test, predicted_labels3)))
     for label in [1, 0]:
-        print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels3, y_test, pos_label=label)))
-        print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels3, y_test, pos_label=label)))
+        print('Precision for label {} = {}'.format(label, metrics.precision_score(y_test, predicted_labels3, pos_label=label)))
+        print('Recall for label {} = {}'.format(label, metrics.recall_score(y_test, predicted_labels3, pos_label=label)))
 
     if plot_metrics:
         print("Generating plots")
