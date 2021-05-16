@@ -1,8 +1,6 @@
-import numpy as np
 import argparse
-from sklearn.model_selection import KFold, GridSearchCV, StratifiedKFold
+from sklearn.model_selection import GridSearchCV
 from sklearn import svm, tree
-from sklearn.svm import SVC
 import os
 import csv, re
 import datetime
@@ -11,8 +9,6 @@ from tqdm import tqdm
 import codecs
 import argparse
 from collections import Counter, defaultdict
-import spacy
-import pandas as pd
 from sklearn.model_selection import train_test_split
 from spacy.lang.en import English
 from sklearn.feature_extraction.text import CountVectorizer
