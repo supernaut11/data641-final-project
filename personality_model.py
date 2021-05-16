@@ -254,7 +254,7 @@ def random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=False)
         
         plt.show()
 
-def grid_search_classify(X_train, y_train, X_test, y_test):
+def grid_search_classify(X_train, y_train, X_test, y_test, plot_metrics=False):
     # GridSearch to test parameters
     label_normalizer = lambda x: 1 if x == 'y' else 0
     y_train = [y for y in map(label_normalizer, y_train)]
@@ -277,12 +277,7 @@ def grid_search_classify(X_train, y_train, X_test, y_test):
     pipe = Pipeline(steps=[('dec_tree', dec_tree)])
     criterion = ['gini', 'entropy']
     max_depth = [2,4,6,8,10,12]
-    param_grid = {
-        'max_depth': [2,3,4,5,6],
-        'max_features': ['auto', 'sqrt', 'log2'],
-        'n_estimators': [200, 500],
-        'criterion' : criterion
-    }
+   
     parameters = dict(dec_tree__criterion=criterion, dec_tree__max_depth=max_depth)
     grid2 = GridSearchCV(pipe, parameters)
     grid2.fit(X_train, y_train)
@@ -296,6 +291,12 @@ def grid_search_classify(X_train, y_train, X_test, y_test):
         print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels2, y_test, pos_label=label)))
 
     rf = RandomForestClassifier(random_state=42)
+    param_grid = {
+        'max_depth': [2,3,4,5,6],
+        'max_features': ['auto', 'sqrt', 'log2'],
+        'n_estimators': [200, 500],
+        'criterion' : criterion
+    }
     grid3 = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5)
     grid3.fit(X_train ,y_train)
     predicted_labels3 = grid3.best_estimator_.predict(X_test)
@@ -307,6 +308,15 @@ def grid_search_classify(X_train, y_train, X_test, y_test):
         print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels3, y_test, pos_label=label)))
         print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels3, y_test, pos_label=label)))
 
+        
+    if plot_metrics:
+        print("Generating plots")
+        now = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        metrics.plot_confusion_matrix(grid3.best_estimator_, X_test, y_test)
+        plt.savefig(f'{now}-rf_gridsearch_conf_matrix.png')
+        metrics.plot_roc_curve(grid3.best_estimator_, X_test, y_test)
+        plt.savefig(f'{now}-rf_gridsearch_roc.png')
+        plt.show()
 
 def perform_llr_analysis(X_data, y_labels, label1, label2, n=25):
     top_label1, top_label2 = calculate_llr(X_data, y_labels, label1, label2, n)
