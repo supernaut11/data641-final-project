@@ -101,3 +101,5 @@ To obtain the results shown in the "Improving Classification - K-Nearest Neighbo
 This will print results to the terminal. Use the `--plot_metrics` flag to generate PNGs of the confusion matrix and ROC curve for the classifier.
 
 ### Essay classification
+
+__Colleen, please add your command line(s) here__

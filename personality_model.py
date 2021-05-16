@@ -223,7 +223,7 @@ def log_reg_classify(vectorizer, X_train, y_train, X_test, y_test, num_most_info
     if plot_metrics:
         print("Generating plots")
         now = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-        metrics.plot_confusion_matrix(lr_classifier, X_test, y_test, normalize='true')
+        metrics.plot_confusion_matrix(lr_classifier, X_test, y_test, normalize='true', cmap='Blues')
         plt.savefig(f'{now}-logistic_reg_conf_matrix.png')
         metrics.plot_roc_curve(lr_classifier, X_test, y_test)
         plt.savefig(f'{now}-logistic_reg_roc.png')
@@ -247,7 +247,7 @@ def random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=False)
     if plot_metrics:
         print("Generating plots")
         now = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-        metrics.plot_confusion_matrix(forest, X_test, y_test, normalize='true')
+        metrics.plot_confusion_matrix(forest, X_test, y_test, normalize='true', cmap='Blues')
         plt.savefig(f'{now}-random_forest_conf_matrix.png')
         metrics.plot_roc_curve(forest, X_test, y_test)
         plt.savefig(f'{now}-random_forest_roc.png')
