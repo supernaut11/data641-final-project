@@ -1,20 +1,20 @@
-# data641-final-project
-Final project for DATA641. Uses Natural Language Processing (NLP) techniques to predict neuroticism based on social media posts and essays.
+# Project Option 1
+This document outlines what was accomplished for the Final project, Option1, for DATA641. Natural Language Processing (NLP) techniques were used to predict neuroticism based on social media posts and essays.
 
 # Overview
-In the main Python Notebook you will:
+In the main Python Notebook you will be:
   - Starting with a typical "raw" dataset
     - We'll be using a personality dataset, this not a publicly available data set and has been de-identified
   - Concatenating relevant social media posts per user to create one or more corpora
   - Tokenizing text
   - Normalizing text
-    - Well use case folding and also a stopword list
+    - We'll use a stopword list and filter punctuation
   - Extracting potentially useful ngrams
   - Using this information to create a baseline classifier
-  - Improve classification
+  - Improve classification with exploration of other estimators 
 
 **The files you will be working with:** 
-  - `mypersonality` this will be the main data set work is done on
+  - `mypersonality` this will be the main data set the notebook works with 
   - `essays` this will be a new dataset used to test the models
   - `personality_model.py` this is the main Python Notebook that will complete the tasks mentioned above
   - `personality_and_essay.py` this is the supplementary Python notebook that will train on the personality data set and test on the new essays data set
