@@ -56,7 +56,7 @@ __NOTE: These command lines assume that your installtion of Python3 is aliased t
 
 For a simple run through:
 
-  python3 personality_model.py
+    python3 personality_model.py
 
 This is the default invocation of the personality dataset analysis. The script will output results for a baseline logistic regression classifier, a GridSearch on Random Forest, Decision Tree, and Support Vector Machine estimators, as well as a kNN classifier.
 
@@ -64,7 +64,7 @@ This is the default invocation of the personality dataset analysis. The script w
 
 The following command line will execute LLR analysis, providing the top 25 results for each label:
 
-  python3 personality_model.py --llr=25
+    python3 personality_model.py --llr=25
 
 This will perform data ingest, tokenization, and LLR analysis, providing the top 25 results.
 
@@ -72,7 +72,7 @@ This will perform data ingest, tokenization, and LLR analysis, providing the top
 
 To obtain the results shown for our baseline classifier in the "Baseline Classifier" section of the write-up, execute:
 
-  python3 personality_model.py --baseline
+    python3 personality_model.py --baseline
 
 This will print results to the terminal. Use the `--plot-metrics` flag to generate PNGs of the confusion matrix and ROC curve for the classifier.
 
@@ -80,7 +80,7 @@ This will print results to the terminal. Use the `--plot-metrics` flag to genera
 
 To obtain the results shown for our random forest classifier in the "Improving Classification - Random Forest Classifier" section of the write-up, execute:
 
-  python3 personality_model.py --random-forest
+    python3 personality_model.py --random-forest
 
 This will print results to the terminal. Use the `--plot-metrics` flag to generate PNGs of the confusion matrix and ROC curve for the classifier.
 
@@ -88,7 +88,7 @@ This will print results to the terminal. Use the `--plot-metrics` flag to genera
 
 To obtain the results shown for our grid search classifiers in the "Improving Classification - Tuning Hyperparameters" section of the write-up, execute:
 
-  python3 personality_model.py --grid-search
+    python3 personality_model.py --grid-search
 
 This will print results to the terminal.
 
@@ -96,8 +96,8 @@ This will print results to the terminal.
 
 To obtain the results shown in the "Improving Classification - K-Nearest Neighbors (KNN) Classifier" section of the write-up, execute:
 
-  python3 personality_model.py --optimized-knn
+    python3 personality_model.py --optimized-knn
 
 This will print results to the terminal. Use the `--plot-metrics` flag to generate PNGs of the confusion matrix and ROC curve for the classifier.
 
-### 
+### Essay classification
