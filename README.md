@@ -31,6 +31,8 @@ The following subsections provide guidance on executing each of the entrypoint s
 
 Prior to executing the analysis scripts, make sure that you have the personality and essay datasets downloaded and extracted on a file system accessible to the scripts. If you do not, download the `project_data_and_resources.zip` as provided on the DATA641 Piazza forum and extract the zip file.
 
+You will also need Python3 installed, preferably with an alias `python3` that points to the install.
+
 ## Command line options
 
 The personality_model.py script provides a description of its command line options if you execute it using the `--help` flag. Some of these flags are derived from previous DATA641 assignments and will behave as expected. New command line options we have added are:
