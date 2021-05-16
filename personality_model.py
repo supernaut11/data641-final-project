@@ -260,59 +260,77 @@ def grid_search_classify(X_train, y_train, X_test, y_test, plot_metrics=False):
     y_train = [y for y in map(label_normalizer, y_train)]
     y_test = [y for y in map(label_normalizer, y_test)]
 
+    scoring = 'f1'
     parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
     svc = svm.SVC()
-    grid = GridSearchCV(svc, parameters)
+    grid = GridSearchCV(svc, parameters, scoring=scoring)
     grid.fit(X_train, y_train)
     predicted_labels = grid.best_estimator_.predict(X_test)
     print(f'Best SVM hyperparameters: {grid.best_params_}')
-    print(f'Best average precision: {grid.best_score_}')
+    print(f'Best {scoring} score: {grid.best_score_}')
 
-    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels,  y_test)))
+    print('Prediction accuracy = {}'.format(metrics.accuracy_score(predicted_labels,  y_test)))
     for label in [1, 0]:
         print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
         print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
+
+    if plot_metrics:
+        print("Generating plots")
+        now = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        metrics.plot_confusion_matrix(grid.best_estimator_, X_test, y_test, cmap='Blues')
+        plt.savefig(f'{now}-svm_gridsearch_conf_matrix.png')
+        metrics.plot_roc_curve(grid.best_estimator_, X_test, y_test)
+        plt.savefig(f'{now}-svm_gridsearch_roc.png')
+        plt.show()
 
     dec_tree = tree.DecisionTreeClassifier()
     pipe = Pipeline(steps=[('dec_tree', dec_tree)])
     criterion = ['gini', 'entropy']
     max_depth = [2,4,6,8,10,12]
    
+    scoring = 'f1'
     parameters = dict(dec_tree__criterion=criterion, dec_tree__max_depth=max_depth)
-    grid2 = GridSearchCV(pipe, parameters)
+    grid2 = GridSearchCV(pipe, parameters, scoring=scoring)
     grid2.fit(X_train, y_train)
     predicted_labels2 = grid2.best_estimator_.predict(X_test)
     print(f'Best Decision tree hyperparameters: {grid2.best_params_}')
-    print(f'Best average precision: {grid2.best_score_}')
+    print(f'Best {scoring} score: {grid2.best_score_}')
 
-    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels2,  y_test)))
+    print('Prediction accuracy = {}'.format(metrics.accuracy_score(predicted_labels2,  y_test)))
     for label in [1, 0]:
         print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels2, y_test, pos_label=label)))
         print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels2, y_test, pos_label=label)))
 
+    if plot_metrics:
+        print("Generating plots")
+        now = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        metrics.plot_confusion_matrix(grid2.best_estimator_, X_test, y_test, cmap='Blues')
+        plt.savefig(f'{now}-dt_gridsearch_conf_matrix.png')
+        metrics.plot_roc_curve(grid2.best_estimator_, X_test, y_test)
+        plt.savefig(f'{now}-dt_gridsearch_roc.png')
+        plt.show()
+
+    scoring = 'f1'
     rf = RandomForestClassifier(random_state=42)
     param_grid = {
-        'max_depth': [2,3,4,5,6],
         'max_features': ['auto', 'sqrt', 'log2'],
-        'n_estimators': [200, 500],
         'criterion' : criterion
     }
-    grid3 = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5)
+    grid3 = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5, scoring=scoring)
     grid3.fit(X_train ,y_train)
     predicted_labels3 = grid3.best_estimator_.predict(X_test)
     print(f'Best Random Forest hyperparameters: {grid3.best_params_}')
-    print(f'Best average precision: {grid3.best_score_}')
+    print(f'Best {scoring} score: {grid3.best_score_}')
 
-    print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels3,  y_test)))
+    print('Prediction accuracy = {}'.format(metrics.accuracy_score(predicted_labels3,  y_test)))
     for label in [1, 0]:
         print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels3, y_test, pos_label=label)))
         print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels3, y_test, pos_label=label)))
 
-        
     if plot_metrics:
         print("Generating plots")
         now = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
-        metrics.plot_confusion_matrix(grid3.best_estimator_, X_test, y_test)
+        metrics.plot_confusion_matrix(grid3.best_estimator_, X_test, y_test, cmap='Blues')
         plt.savefig(f'{now}-rf_gridsearch_conf_matrix.png')
         metrics.plot_roc_curve(grid3.best_estimator_, X_test, y_test)
         plt.savefig(f'{now}-rf_gridsearch_roc.png')
@@ -352,7 +370,7 @@ if __name__ == "__main__":
         random_forest_classify(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
     elif args.grid_search:
         vectorizer, X_train, y_train, X_test, y_test = get_train_test(args.data_dir, False, 2, False, False, False)
-        grid_search_classify(X_train, y_train, X_test, y_test)
+        grid_search_classify(X_train, y_train, X_test, y_test, args.plot_metrics)
     elif args.optimized_knn:
         vectorizer, X_train, y_train, X_test, y_test = get_train_test(args.data_dir, False, 2, False, False, False)
         knn_experiment(X_train, y_train, X_test, y_test, plot_metrics=args.plot_metrics)
