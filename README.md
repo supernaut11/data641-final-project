@@ -74,7 +74,7 @@ To obtain the results shown for our baseline classifier in the "Baseline Classif
 
     python3 personality_model.py --baseline
 
-This will print results to the terminal. Use the `--plot-metrics` flag to generate PNGs of the confusion matrix and ROC curve for the classifier.
+This will print results to the terminal. Use the `--plot_metrics` flag to generate PNGs of the confusion matrix and ROC curve for the classifier.
 
 ### Random Forest Classifier
 
@@ -82,7 +82,7 @@ To obtain the results shown for our random forest classifier in the "Improving C
 
     python3 personality_model.py --random-forest
 
-This will print results to the terminal. Use the `--plot-metrics` flag to generate PNGs of the confusion matrix and ROC curve for the classifier.
+This will print results to the terminal. Use the `--plot_metrics` flag to generate PNGs of the confusion matrix and ROC curve for the classifier.
 
 ### Random Forest, Decision Tree, and SVM Grid Search
 
@@ -98,6 +98,6 @@ To obtain the results shown in the "Improving Classification - K-Nearest Neighbo
 
     python3 personality_model.py --optimized-knn
 
-This will print results to the terminal. Use the `--plot-metrics` flag to generate PNGs of the confusion matrix and ROC curve for the classifier.
+This will print results to the terminal. Use the `--plot_metrics` flag to generate PNGs of the confusion matrix and ROC curve for the classifier.
 
 ### Essay classification
