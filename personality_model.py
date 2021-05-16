@@ -283,8 +283,8 @@ def grid_search_classify(X_train, y_train, X_test, y_test):
     grid = GridSearchCV(svc, parameters)
     grid.fit(X_train, y_train)
     predicted_labels = grid.best_estimator_.predict(X_test)
-    print(f'best SVM hyperparameters: {grid.best_params_}')
-    print(f'best average precision: {grid.best_score_}')
+    print(f'Best SVM hyperparameters: {grid.best_params_}')
+    print(f'Best average precision: {grid.best_score_}')
 
     print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels,  y_test)))
     for label in [1, 0]:
@@ -292,7 +292,6 @@ def grid_search_classify(X_train, y_train, X_test, y_test):
         print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
 
     dec_tree = tree.DecisionTreeClassifier()
-    rf = RandomForestClassifier(random_state=42)
     pipe = Pipeline(steps=[('dec_tree', dec_tree)])
     criterion = ['gini', 'entropy']
     max_depth = [2,4,6,8,10,12]
@@ -306,20 +305,20 @@ def grid_search_classify(X_train, y_train, X_test, y_test):
     grid2 = GridSearchCV(pipe, parameters)
     grid2.fit(X_train, y_train)
     predicted_labels2 = grid2.best_estimator_.predict(X_test)
-    print(f'best SVM hyperparameters: {grid2.best_params_}')
-    print(f'best average precision: {grid2.best_score_}')
+    print(f'Best Decision tree hyperparameters: {grid2.best_params_}')
+    print(f'Best average precision: {grid2.best_score_}')
 
     print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels2,  y_test)))
     for label in [1, 0]:
         print('Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels2, y_test, pos_label=label)))
         print('Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels2, y_test, pos_label=label)))
 
-
+    rf = RandomForestClassifier(random_state=42)
     grid3 = GridSearchCV(estimator=rf, param_grid=param_grid, cv=5)
     grid3.fit(X_train ,y_train)
     predicted_labels3 = grid3.best_estimator_.predict(X_test)
-    print(f'best SVM hyperparameters: {grid3.best_params_}')
-    print(f'best average precision: {grid3.best_score_}')
+    print(f'Best Random Forest hyperparameters: {grid3.best_params_}')
+    print(f'Best average precision: {grid3.best_score_}')
 
     print('Accuracy  = {}'.format(metrics.accuracy_score(predicted_labels3,  y_test)))
     for label in [1, 0]:
