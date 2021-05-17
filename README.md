@@ -102,4 +102,8 @@ This will print results to the terminal. Use the `--plot_metrics` flag to genera
 
 ### Essay classification
 
-__Colleen, please add your command line(s) here__
+To obtain results similar to those shown in "Evaluating a New Dataset" section of the write-up, execute:
+
+    python3 personality_and_essay.py
+
+**Note: These results vary with each execution due to a static random seed not having been set.**
