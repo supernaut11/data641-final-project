@@ -116,3 +116,5 @@ To obtain the results shown in the "Evaluating a New Dataset" section of the wri
     python3 personality_and_essay.py
 
 This will print Logistic Regression and Random Forest accuracy, precision, and recall results for both the personality and essay datasets to the terminal.
+
+**Note: These results vary with each execution due to a static random seed not having been set.**
