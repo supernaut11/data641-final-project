@@ -23,6 +23,15 @@ This module provides the following capabilities:
 
 NLP module that trains on the personality dataset and evaluates performance of models against the essays dataset.
 
+This module provides the following capabilities:
+  - Starting with a typical "raw" dataset
+    - Personality dataset is not publicly available (i.e., not included in this repo) and has been de-identified
+    - Essay dataset is not publicly available (i.e., not included in this repo) and has been de-identified
+  - Concatenating relevant social media posts per user to create one or more corpora
+  - Tokenizing text
+    - Optionally remove sklearn English stop words, lemmatize, and/or produce bigrams/trigrams
+  - Using this information to run Logistic Regression and Random Forest classifiers
+
 # Executing analysis
 
 The following subsections provide guidance on executing each of the entrypoint scripts.
@@ -102,4 +111,8 @@ This will print results to the terminal. Use the `--plot_metrics` flag to genera
 
 ### Essay classification
 
-__Colleen, please add your command line(s) here__
+To obtain the results shown in the "Evaluating a New Dataset" section of the write-up, execute:
+
+    python3 personality_and_essay.py
+
+This will print Logistic Regression and Random Forest accuracy, precision, and recall results for both the personality and essay datasets to the terminal.
