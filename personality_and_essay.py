@@ -28,7 +28,7 @@ from sklearn.metrics import accuracy_score
 import statistics
 
 
-data = pd.read_csv('wcpr_mypersonality.csv', encoding='cp1252')
+data = pd.read_csv('./data/wcpr_mypersonality.csv', encoding='cp1252')
 
 array_agg = lambda x: ' '.join(x.astype(str))
 
@@ -37,7 +37,7 @@ neu_status = data[['#AUTHID','cNEU']].drop_duplicates()
 
 df = pd.merge(group_status, neu_status, on=["#AUTHID"])
 
-essay_data = pd.read_csv('wcpr_essays.csv', encoding='cp1252')
+essay_data = pd.read_csv('./data/wcpr_essays.csv', encoding='cp1252')
 
 
 def split_into_lemmas(text): # creates function to lemmatize words
@@ -66,8 +66,8 @@ def lr_rf_classify(essay = False):
     print('\n')
     print('Random Forest Accuracy:',accuracy_score(y_test,predicted_labels))
     for label in ['y', 'n']:
-        print(' Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
-        print(' Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
+        print(' Precision for label {} = {}'.format(label, metrics.precision_score(y_test, predicted_labels, pos_label=label)))
+        print(' Recall for label {} = {}'.format(label, metrics.recall_score(y_test, predicted_labels, pos_label=label)))
     #rf_acc.append(accuracy_score(y_test, predicted_labels))
         
     lr_classifier.fit(X_train_dtm, y_train)
@@ -75,8 +75,8 @@ def lr_rf_classify(essay = False):
     predicted_labels = lr_classifier.predict(X_test_dtm)
     print('Logistic Regression Accuracy:',accuracy_score(y_test,predicted_labels))
     for label in ['y', 'n']:
-        print(' Precision for label {} = {}'.format(label, metrics.precision_score(predicted_labels, y_test, pos_label=label)))
-        print(' Recall for label {} = {}'.format(label, metrics.recall_score(predicted_labels, y_test, pos_label=label)))
+        print(' Precision for label {} = {}'.format(label, metrics.precision_score(y_test, predicted_labels, pos_label=label)))
+        print(' Recall for label {} = {}'.format(label, metrics.recall_score(y_test, predicted_labels, pos_label=label)))
     #lr_acc.append(accuracy_score(y_test, predicted_labels))
     print('\n')
 
